@@ -1,11 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import api from "../api/api.js";
-<<<<<<< HEAD
-import Card  from "../components/Card.jsx";
-=======
 import Card from "../components/Card.jsx";
->>>>>>> 5420f2b (Initialized client and server)
 
 const TagFeed = () => {
   const { slug } = useParams();
@@ -22,13 +18,7 @@ const TagFeed = () => {
         setTag(res.data.data.tag);
         setPosts(res.data.data.posts);
       } catch (err) {
-<<<<<<< HEAD
-        setError(
-          err.response?.data?.message || "Unable to load tag posts"
-        );
-=======
         setError(err.response?.data?.message || "Unable to load tag posts");
->>>>>>> 5420f2b (Initialized client and server)
       }
     };
 
@@ -36,23 +26,6 @@ const TagFeed = () => {
   }, [slug]);
 
   return (
-<<<<<<< HEAD
-    <>
-      <h1>{tag ? `#${tag.name}` : "Tag Posts"}</h1>
-
-      {error && <p>{error}</p>}
-
-      <div className="grid">
-        {posts.map((post) => (
-          <Card key={post._id} post={post} />
-        ))}
-      </div>
-    </>
-  );
-};
-
-export default TagFeed;
-=======
     <main className="min-h-screen bg-stone-50 px-5 py-12 sm:px-8 sm:py-16">
       <section className="mx-auto max-w-7xl">
         <header className="mb-8 border-b border-stone-200 pb-6">
@@ -95,4 +68,3 @@ export default TagFeed;
 };
 
 export default TagFeed;
->>>>>>> 5420f2b (Initialized client and server)

@@ -37,21 +37,6 @@ const Dashboard = () => {
   };
 
   if (!user) {
-<<<<<<< HEAD
-    return <h2>Loading....</h2>;
-  }
-
-  return (
-    <div className="dashboard">
-      <h1>Welcome, {user.name}!</h1>
-
-      <p>Email: {user.email}</p>
-
-      <p>Bio: {user.bio || "No bio added"}</p>
-
-      <button onClick={handleLogout}>Logout</button>
-    </div>
-=======
     return (
       <main
         role="status"
@@ -104,7 +89,6 @@ const Dashboard = () => {
         </div>
       </section>
     </main>
->>>>>>> 5420f2b (Initialized client and server)
   );
 };
 

@@ -34,38 +34,6 @@ const Home = () => {
   };
 
   return (
-<<<<<<< HEAD
-    <>
-      {/* Hero Section */}
-      <section className="hero">
-        <h1>Read, Write and Share Knowledge.</h1>
-        <p>Explore articles from the developer community.</p>
-      </section>
-
-      {/* Search Form */}
-      <form onSubmit={handleSearch}>
-        <input
-          type="text"
-          placeholder="Search articles"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-
-        <button type="submit">Search</button>
-      </form>
-
-      {/* Articles */}
-      <h2>Latest Articles</h2>
-
-      {error && <p className="error">{error}</p>}
-
-      <div className="grid">
-        {posts.length > 0
-          ? posts.map((post) => <Card key={post._id} post={post} />)
-          : !error && <p>No articles found.</p>}
-      </div>
-    </>
-=======
     <main className="min-h-screen bg-stone-50">
       {/* Hero Section */}
       <section className="border-b border-stone-200 bg-white">
@@ -139,7 +107,6 @@ const Home = () => {
         </div>
       </section>
     </main>
->>>>>>> 5420f2b (Initialized client and server)
   );
 };
 

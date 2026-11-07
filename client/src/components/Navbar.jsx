@@ -11,31 +11,6 @@ const Navbar = () => {
   };
 
   return (
-<<<<<<< HEAD
-    <header>
-      <Link to="/" className="brand">
-        Hashnode Blog
-      </Link>
-
-      <nav>
-        <Link to="/">Home</Link>
-        <Link to="/tags">Tags</Link>
-
-        {user ? (
-          <>
-            <Link to="/dashboard">Dashboard</Link>
-            <Link to="/profile">Profile</Link>
-
-            <button onClick={handleLogout}>Logout</button>
-          </>
-        ) : (
-          <>
-            <Link to="/login">Login</Link>
-            <Link to="/register">Register</Link>
-          </>
-        )}
-      </nav>
-=======
     <header className="border-b border-stone-200 bg-white">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-5 py-4 sm:px-8">
         <Link
@@ -87,7 +62,6 @@ const Navbar = () => {
           )}
         </nav>
       </div>
->>>>>>> 5420f2b (Initialized client and server)
     </header>
   );
 };

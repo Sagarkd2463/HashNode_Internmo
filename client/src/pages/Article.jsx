@@ -20,29 +20,6 @@ const Article = () => {
       });
   }, [slug]);
 
-<<<<<<< HEAD
-  if (error) return <p>{error}</p>;
-
-  if (!post) return <p>Loading...</p>;
-
-  return (
-    <article className="article">
-      <small>By {post.author?.name || "Author"}</small>
-
-      <h1>{post.title}</h1>
-
-      {post.tags?.map((tag) => (
-        <Link className="tag" key={tag._id} to={`/tags/${tag.slug}`}>
-          #{tag.name}
-        </Link>
-      ))}
-
-      {post.coverImage && (
-        <img className="article-cover" src={post.coverImage} alt={post.title} />
-      )}
-
-      <Markdown content={post.content} />
-=======
   if (error) {
     return (
       <div className="mx-auto max-w-3xl px-5 py-20 sm:px-8">
@@ -112,7 +89,6 @@ const Article = () => {
       <div className="article-content text-lg leading-8 text-stone-800">
         <Markdown content={post.content} />
       </div>
->>>>>>> 5420f2b (Initialized client and server)
     </article>
   );
 };

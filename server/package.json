@@ -2,18 +2,11 @@
   "name": "server",
   "version": "1.0.0",
   "description": "",
-<<<<<<< HEAD
-  "main": "index.js",
-  "dependencies": {
-    "bcryptjs": "^3.0.3",
-    "cors": "^2.8.6",
-    "dotenv": "^18.0.9",
-=======
   "main": "server.js",
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
->>>>>>> 5420f2b (Initialized client and server)
+    "dotenv": "^18.0.9",
     "express": "^5.3.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.11.3"

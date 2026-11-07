@@ -1,20 +1,8 @@
-<<<<<<< HEAD
-import react from react;
-=======
 import react from "react";
->>>>>>> 5420f2b (Initialized client and server)
 import { Link } from "react-router-dom";
 
 const NotFound = () => {
   return (
-<<<<<<< HEAD
-    <div className="panel">
-      <h1>404 - Page Not Found</h1>
-      <p>Sorry, the page you are looking for does not exist.</p>
-
-      <Link to="/">Go to Home</Link>
-    </div>
-=======
     <main className="flex min-h-[70vh] items-center justify-center bg-stone-50 px-5 py-16">
       <section className="w-full max-w-xl rounded-2xl border border-stone-200 bg-white p-8 text-center shadow-sm sm:p-12">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
@@ -37,7 +25,6 @@ const NotFound = () => {
         </Link>
       </section>
     </main>
->>>>>>> 5420f2b (Initialized client and server)
   );
 };
 

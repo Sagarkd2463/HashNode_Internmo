@@ -45,57 +45,6 @@ const Profile = () => {
   };
 
   return (
-<<<<<<< HEAD
-    <section className="panel narrow">
-      <h1>Profile Settings</h1>
-
-      <form className="form" onSubmit={handleSave}>
-        {/* Name */}
-        <label>
-          Name
-          <input
-            type="text"
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            placeholder="Enter your name"
-            required
-          />
-        </label>
-
-        {/* Bio */}
-        <label>
-          Bio
-          <textarea
-            name="bio"
-            value={form.bio}
-            onChange={handleChange}
-            placeholder="Write something about yourself"
-          />
-        </label>
-
-        {/* Avatar URL */}
-        <label>
-          Avatar URL
-          <input
-            type="text"
-            name="avatarUrl"
-            value={form.avatarUrl}
-            onChange={handleChange}
-            placeholder="Enter profile image URL"
-          />
-        </label>
-
-        {/* Save Button */}
-        <button type="submit" disabled={loading}>
-          {loading ? "Saving..." : "Save Profile"}
-        </button>
-      </form>
-
-      {/* Success or Error Message */}
-      {message && <p>{message}</p>}
-    </section>
-=======
     <main className="min-h-screen bg-stone-50 px-5 py-12 sm:px-8">
       <section className="mx-auto w-full max-w-2xl rounded-2xl border border-stone-200 bg-white p-6 shadow-sm sm:p-10">
         <header className="mb-8">
@@ -176,7 +125,6 @@ const Profile = () => {
         )}
       </section>
     </main>
->>>>>>> 5420f2b (Initialized client and server)
   );
 };
 

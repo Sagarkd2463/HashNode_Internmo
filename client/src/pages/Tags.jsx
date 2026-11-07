@@ -11,14 +11,10 @@ const Tags = () => {
         const res = await api.get("/tags");
         setTags(res.data.data.tags);
       } catch (error) {
-<<<<<<< HEAD
-        console.log("Error fetching tags:", error?.response?.data?.message || error.message);
-=======
         console.log(
           "Error fetching tags:",
           error?.response?.data?.message || error.message,
         );
->>>>>>> 5420f2b (Initialized client and server)
       }
     };
 
@@ -26,20 +22,6 @@ const Tags = () => {
   }, []);
 
   return (
-<<<<<<< HEAD
-    <>
-      <h1>Explore Tags</h1>
-
-      <div className="grid">
-        {tags.map((tag) => (
-          <Link className="panel" key={tag._id} to={`/tags/${tag.slug}`}>
-            <b>#{tag.name}</b>
-            <p>{tag.postCount || 0} published posts</p>
-          </Link>
-        ))}
-      </div>
-    </>
-=======
     <main className="min-h-screen bg-stone-50 px-5 py-12 sm:px-8 sm:py-16">
       <section className="mx-auto max-w-7xl">
         <header className="mb-8">
@@ -81,7 +63,6 @@ const Tags = () => {
         )}
       </section>
     </main>
->>>>>>> 5420f2b (Initialized client and server)
   );
 };
 

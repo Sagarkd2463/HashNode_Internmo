@@ -44,50 +44,6 @@ const Register = () => {
   };
 
   return (
-<<<<<<< HEAD
-    <div className="auth-container">
-      <form onSubmit={handleSubmit} className="auth-form">
-        <h2>Create Account</h2>
-
-        {error && <p className="error">{error}</p>}
-
-        <input
-          type="text"
-          name="name"
-          placeholder="Enter name"
-          value={formData.name}
-          onChange={handleChange}
-          required
-        />
-
-        <input
-          type="email"
-          name="email"
-          placeholder="Enter email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-        />
-
-        <input
-          type="password"
-          name="password"
-          placeholder="Enter password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-          minLength={8}
-        />
-
-        <button type="submit">Register</button>
-
-        <p>
-          Already have an account?
-          <Link to="/login"> Login</Link>
-        </p>
-      </form>
-    </div>
-=======
     <main className="flex min-h-screen items-center justify-center bg-stone-50 px-5 py-12">
       <form
         onSubmit={handleSubmit}
@@ -183,7 +139,6 @@ const Register = () => {
         </p>
       </form>
     </main>
->>>>>>> 5420f2b (Initialized client and server)
   );
 };
 

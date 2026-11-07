@@ -50,13 +50,7 @@ const Editor = () => {
           });
         }
       } catch (err) {
-<<<<<<< HEAD
-        setError(
-          err.response?.data?.message || "Could not load data"
-        );
-=======
         setError(err.response?.data?.message || "Could not load data");
->>>>>>> 5420f2b (Initialized client and server)
       }
     };
 
@@ -93,13 +87,7 @@ const Editor = () => {
       const tag = res.data.data.tag;
 
       setTags((prev) =>
-<<<<<<< HEAD
-        prev.some((item) => item._id === tag._id)
-          ? prev
-          : [...prev, tag]
-=======
         prev.some((item) => item._id === tag._id) ? prev : [...prev, tag],
->>>>>>> 5420f2b (Initialized client and server)
       );
 
       setPost((prev) => ({
@@ -110,13 +98,7 @@ const Editor = () => {
       setNewTag("");
       setError("");
     } catch (err) {
-<<<<<<< HEAD
-      setError(
-        err.response?.data?.message || "Could not create tag"
-      );
-=======
       setError(err.response?.data?.message || "Could not create tag");
->>>>>>> 5420f2b (Initialized client and server)
     }
   };
 
@@ -137,134 +119,13 @@ const Editor = () => {
 
       navigate("/dashboard");
     } catch (err) {
-<<<<<<< HEAD
-      setError(
-        err.response?.data?.message || "Could not save post"
-      );
-=======
       setError(err.response?.data?.message || "Could not save post");
->>>>>>> 5420f2b (Initialized client and server)
     } finally {
       setLoading(false);
     }
   };
 
   return (
-<<<<<<< HEAD
-    <>
-      <h1>{id ? "Edit Post" : "Write a Post"}</h1>
-
-      {error && <p className="error">{error}</p>}
-
-      <div className="editor">
-
-        {/* Editor Form */}
-        <form className="form panel" onSubmit={handleSave}>
-
-          <label>
-            Title
-            <input
-              type="text"
-              name="title"
-              value={post.title}
-              onChange={handleChange}
-              required
-            />
-          </label>
-
-          <label>
-            Cover Image URL
-            <input
-              type="text"
-              name="coverImage"
-              value={post.coverImage}
-              onChange={handleChange}
-            />
-          </label>
-
-          <label>
-            Markdown Content
-            <textarea
-              name="content"
-              rows="18"
-              value={post.content}
-              onChange={handleChange}
-              required
-            />
-          </label>
-
-          <label>
-            Status
-            <select
-              name="status"
-              value={post.status}
-              onChange={handleChange}
-            >
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
-            </select>
-          </label>
-
-          {/* Select Tags */}
-          <b>Tags</b>
-
-          {tags.map((tag) => (
-            <label className="check" key={tag._id}>
-              <input
-                type="checkbox"
-                checked={post.tags.includes(tag._id)}
-                onChange={() => handleTag(tag._id)}
-              />
-
-              {tag.name}
-            </label>
-          ))}
-
-          {/* Add New Tag */}
-          <div className="row">
-            <input
-              type="text"
-              value={newTag}
-              onChange={(e) => setNewTag(e.target.value)}
-              placeholder="Enter new tag"
-            />
-
-            <button type="button" onClick={addTag}>
-              Add Tag
-            </button>
-          </div>
-
-          {/* Save Button */}
-          <button type="submit" disabled={loading}>
-            {loading ? "Saving..." : "Save Post"}
-          </button>
-
-        </form>
-
-        {/* Live Preview */}
-        <aside className="panel">
-          <h2>Live Preview</h2>
-
-          <h2>{post.title}</h2>
-
-          {post.coverImage && (
-            <img
-              src={post.coverImage}
-              alt={post.title}
-              className="article-cover"
-            />
-          )}
-
-          <Markdown content={post.content} />
-        </aside>
-
-      </div>
-    </>
-  );
-};
-
-export default Editor;
-=======
     <main className="min-h-screen bg-stone-50 px-4 py-10 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <header className="mb-8">
@@ -457,4 +318,3 @@ export default Editor;
 };
 
 export default Editor;
->>>>>>> 5420f2b (Initialized client and server)

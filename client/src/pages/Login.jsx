@@ -43,40 +43,6 @@ const Login = () => {
   };
 
   return (
-<<<<<<< HEAD
-    <div className="auth-container">
-      <form onSubmit={handleSubmit} className="auth-form">
-        <h2>Login</h2>
-
-        {error && <p className="error">{error}</p>}
-
-        <input
-          type="email"
-          name="email"
-          placeholder="Enter email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-        />
-
-        <input
-          type="password"
-          name="password"
-          placeholder="Enter password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-        />
-
-        <button type="submit">Login</button>
-
-        <p>
-          Don't have an account?
-          <Link to="/register"> Register</Link>
-        </p>
-      </form>
-    </div>
-=======
     <main className="flex min-h-screen items-center justify-center bg-stone-50 px-5 py-12">
       <form
         onSubmit={handleSubmit}
@@ -155,7 +121,6 @@ const Login = () => {
         </p>
       </form>
     </main>
->>>>>>> 5420f2b (Initialized client and server)
   );
 };
 
