@@ -12,9 +12,17 @@ dotenv.config();
 
 const app = express();
 
+<<<<<<< HEAD
 app.use(cors({
   origin:process.env.CLIENT_ORIGIN_URI
 }));
+=======
+app.use(
+  cors({
+    origin: process.env.CLIENT_ORIGIN_URI,
+  })
+);
+>>>>>>> 5420f2b (Initialized client and server)
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -36,7 +44,10 @@ const startServer = async () => {
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
     });
+<<<<<<< HEAD
 
+=======
+>>>>>>> 5420f2b (Initialized client and server)
   } catch (error) {
     console.error("Server startup failed:", error.message);
     process.exit(1);
