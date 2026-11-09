@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import api from "../api/api";
+import { useAuth } from "../context/useAuth.js";
 
 const Login = () => {
   const navigate = useNavigate();
+
+  const { login } = useAuth();
 
   const [formData, setFormData] = useState({
     email: "",
@@ -11,6 +13,7 @@ const Login = () => {
   });
 
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -21,24 +24,27 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     setError("");
+    setLoading(true);
 
     try {
-      const response = await api.post("/auth/login", formData);
+      await login({
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password,
+      });
 
-      const result = await response.data;
-
-      if (!response.ok) {
-        throw new Error(result.message);
-      }
-
-      localStorage.setItem("token", result.data.token);
-
-      localStorage.setItem("user", JSON.stringify(result.data.user));
-
-      navigate("/dashboard");
+      navigate("/dashboard", { replace: true });
     } catch (error) {
-      setError(error.response?.data?.message || "Login failure. Try again");
+      console.error("Login error:", error);
+
+      setError(
+        error.response?.data?.message ||
+          error.message ||
+          "Login failed. Please try again.",
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -52,9 +58,11 @@ const Login = () => {
           <p className="text-sm font-medium uppercase tracking-wide text-emerald-700">
             Welcome back
           </p>
+
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-stone-950">
             Log in
           </h1>
+
           <p className="mt-2 text-sm leading-6 text-stone-600">
             Sign in to continue to your account.
           </p>
@@ -74,15 +82,16 @@ const Login = () => {
             <span className="mb-2 block text-sm font-medium text-stone-800">
               Email
             </span>
+
             <input
               type="email"
               name="email"
               autoComplete="email"
-              placeholder="you@example.com"
+              placeholder="user@example.com"
               value={formData.email}
               onChange={handleChange}
               required
-              className="w-full rounded-lg border border-stone-300 px-4 py-3 text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
+              className="w-full rounded-lg border border-stone-300 px-4 py-3 outline-none focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
             />
           </label>
 
@@ -90,6 +99,7 @@ const Login = () => {
             <span className="mb-2 block text-sm font-medium text-stone-800">
               Password
             </span>
+
             <input
               type="password"
               name="password"
@@ -98,23 +108,24 @@ const Login = () => {
               value={formData.password}
               onChange={handleChange}
               required
-              className="w-full rounded-lg border border-stone-300 px-4 py-3 text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
+              className="w-full rounded-lg border border-stone-300 px-4 py-3 outline-none focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
             />
           </label>
         </div>
 
         <button
           type="submit"
-          className="mt-6 w-full rounded-lg bg-stone-950 px-5 py-3 font-semibold text-white transition hover:bg-stone-700 focus:outline-none focus:ring-2 focus:ring-stone-500 focus:ring-offset-2"
+          disabled={loading}
+          className="mt-6 w-full rounded-lg bg-stone-950 px-5 py-3 font-semibold text-white hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Log in
+          {loading ? "Logging in..." : "Log in"}
         </button>
 
         <p className="mt-6 text-center text-sm text-stone-600">
-          Don’t have an account?{" "}
+          Don't have an account?{" "}
           <Link
             to="/register"
-            className="font-semibold text-emerald-800 underline-offset-4 hover:underline"
+            className="font-semibold text-emerald-800 hover:underline"
           >
             Register
           </Link>

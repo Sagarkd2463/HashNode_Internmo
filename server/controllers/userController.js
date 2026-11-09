@@ -145,7 +145,7 @@ export const updateMyProfile = async (req, res, next) => {
       req.user._id,
       { $set: updates },
       {
-        new: true,
+        returnDocument: "after",
         runValidators: true,
       },
     );

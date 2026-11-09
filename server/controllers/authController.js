@@ -25,6 +25,7 @@ export const registerUser = async (req, res) => {
     const password =
       typeof req.body.password === "string" ? req.body.password : "";
 
+    // Required fields
     if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
@@ -32,6 +33,7 @@ export const registerUser = async (req, res) => {
       });
     }
 
+    // Name validation
     if (name.length < 2 || name.length > 80) {
       return res.status(400).json({
         success: false,
@@ -39,20 +41,25 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    // Correct email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(email)) {
       return res.status(400).json({
         success: false,
         message: "Please enter a valid email address.",
       });
     }
 
+    // Password validation
     if (password.length < 8) {
       return res.status(400).json({
         success: false,
-        message: "Password must be atleast 8 characters.",
+        message: "Password must be at least 8 characters.",
       });
     }
 
+    // Check existing user
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {
@@ -62,14 +69,17 @@ export const registerUser = async (req, res) => {
       });
     }
 
+    // Hash password
     const hashPassword = await hashedPassword(password);
 
+    // Create user
     const user = await User.create({
       name,
       email,
       password: hashPassword,
     });
 
+    // Generate JWT
     const token = generateToken(user._id);
 
     return res.status(201).json({
@@ -81,9 +91,19 @@ export const registerUser = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error("REGISTER ERROR:", error);
+
+    // Handle duplicate email
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "An account with this email already exists.",
+      });
+    }
+
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Internal server error during registration.",
     });
   }
 };
@@ -99,6 +119,7 @@ export const loginUser = async (req, res) => {
     const password =
       typeof req.body.password === "string" ? req.body.password : "";
 
+    // Validate required fields
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -106,27 +127,40 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    // check for existing user
+    // Validate email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a valid email address.",
+      });
+    }
+
+    // Find existing user
     const user = await User.findOne({ email });
 
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: "Invalid user credentials. Please enter valid credentials.",
+        message: "Invalid email or password.",
       });
     }
 
+    // Compare password with hashed password
     const match = await comparePassword(password, user.password);
 
     if (!match) {
       return res.status(401).json({
         success: false,
-        message: "Invalid password. Please enter correct password.",
+        message: "Invalid email or password.",
       });
     }
 
+    // Generate JWT token
     const token = generateToken(user._id);
 
+    // Return successful response
     return res.status(200).json({
       success: true,
       message: "Login successful.",
@@ -136,9 +170,11 @@ export const loginUser = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error("LOGIN ERROR:", error);
+
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Internal server error during login.",
     });
   }
 };

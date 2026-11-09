@@ -12,6 +12,7 @@ const Register = () => {
   });
 
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -23,14 +24,15 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
     try {
       const response = await api.post("/auth/register", formData);
 
-      const result = await response.data;
+      const result = response.data;
 
-      if (!response.ok) {
-        throw new Error(result.message);
+      if (!result.success) {
+        throw new Error(result.message || "Registration failed");
       }
 
       localStorage.setItem("token", result.data.token);
@@ -39,7 +41,18 @@ const Register = () => {
 
       navigate("/");
     } catch (error) {
-      setError(error.response?.data?.message || "Registration failed");
+      console.error(
+        "Registration error:",
+        error.response?.data || error.message,
+      );
+
+      setError(
+        error.response?.data?.message ||
+          error.message ||
+          "Registration failed. Please try again.",
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -53,9 +66,11 @@ const Register = () => {
           <p className="text-sm font-medium uppercase tracking-wide text-emerald-700">
             Join the community
           </p>
+
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-stone-950">
             Create account
           </h1>
+
           <p className="mt-2 text-sm leading-6 text-stone-600">
             Sign up to read, write, and share ideas.
           </p>
@@ -75,6 +90,7 @@ const Register = () => {
             <span className="mb-2 block text-sm font-medium text-stone-800">
               Name
             </span>
+
             <input
               type="text"
               name="name"
@@ -83,7 +99,7 @@ const Register = () => {
               value={formData.name}
               onChange={handleChange}
               required
-              className="w-full rounded-lg border border-stone-300 px-4 py-3 text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
+              className="w-full rounded-lg border border-stone-300 px-4 py-3"
             />
           </label>
 
@@ -91,15 +107,16 @@ const Register = () => {
             <span className="mb-2 block text-sm font-medium text-stone-800">
               Email
             </span>
+
             <input
               type="email"
               name="email"
               autoComplete="email"
-              placeholder="you@example.com"
+              placeholder="user@example.com"
               value={formData.email}
               onChange={handleChange}
               required
-              className="w-full rounded-lg border border-stone-300 px-4 py-3 text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
+              className="w-full rounded-lg border border-stone-300 px-4 py-3"
             />
           </label>
 
@@ -107,6 +124,7 @@ const Register = () => {
             <span className="mb-2 block text-sm font-medium text-stone-800">
               Password
             </span>
+
             <input
               type="password"
               name="password"
@@ -116,16 +134,17 @@ const Register = () => {
               onChange={handleChange}
               required
               minLength={8}
-              className="w-full rounded-lg border border-stone-300 px-4 py-3 text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
+              className="w-full rounded-lg border border-stone-300 px-4 py-3"
             />
           </label>
         </div>
 
         <button
           type="submit"
-          className="mt-6 w-full rounded-lg bg-stone-950 px-5 py-3 font-semibold text-white transition hover:bg-stone-700 focus:outline-none focus:ring-2 focus:ring-stone-500 focus:ring-offset-2"
+          disabled={loading}
+          className="mt-6 w-full rounded-lg bg-stone-950 px-5 py-3 font-semibold text-white hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Register
+          {loading ? "Creating account..." : "Register"}
         </button>
 
         <p className="mt-6 text-center text-sm text-stone-600">
