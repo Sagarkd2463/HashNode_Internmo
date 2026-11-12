@@ -1,5 +1,5 @@
-export const slugify = (value = "") =>
-  value
+export const slugify = (value = "") => {
+  return value
     .toString()
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -8,6 +8,7 @@ export const slugify = (value = "") =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 180);
+};
 
 export const makeExcerpt = (content = "", maxLength = 250) => {
   const plainText = content

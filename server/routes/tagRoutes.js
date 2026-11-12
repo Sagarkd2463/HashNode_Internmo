@@ -1,15 +1,20 @@
 import express from "express";
-import { createTag, getPublishedPostsByTag, listTags } from "../controllers/tagController.js";
 
-const tagRouter = express.Router();
+import {
+  getTags,
+  createTag,
+  getPostsByTag,
+} from "../controllers/tagController.js";
 
-// Get all tags
-tagRouter.get("/", listTags);
+const router = express.Router();
 
-// Get published posts for one tag
-tagRouter.get("/:slug/posts", getPublishedPostsByTag);
+// Get all tags with published post counts
+router.get("/", getTags);
 
 // Create a new tag
-tagRouter.post("/", createTag);
+router.post("/", createTag);
 
-export default tagRouter;
+// Get published posts by tag slug
+router.get("/:slug/posts", getPostsByTag);
+
+export default router;

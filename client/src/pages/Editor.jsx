@@ -46,7 +46,7 @@ const Editor = () => {
             content: p.content,
             coverImage: p.coverImage || "",
             status: p.status,
-            tags: p.tags.map((tag) => tag._id || tag),
+            tags: (p.tags || []).map((tag) => tag._id || tag),
           });
         }
       } catch (err) {

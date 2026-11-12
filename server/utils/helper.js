@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Post from "../models/Post.js";
 import Tag from "../models/Tag.js";
 import { slugify } from "../utils/slug.js";
@@ -10,52 +11,70 @@ export const populatePost = (query) => {
 };
 
 // Find or create tags
-export const getTags = async (tagNames = []) => {
-  if (!Array.isArray(tagNames)) {
-    throw new Error("Tags must be an array.");
-  }
-
-  if (tagNames.some((tag) => typeof tag !== "string")) {
-    throw new Error("Each tag must be a string.");
-  }
-
-  const names = [
-    ...new Set(tagNames.map((tag) => tag.trim().toLowerCase()).filter(Boolean)),
-  ];
-
-  if (names.length > 10) {
-    throw new Error("A post can have a maximum of 10 tags.");
+export const getTags = async (tagValues = []) => {
+  if (!Array.isArray(tagValues)) {
+    const error = new Error("Tags must be an array.");
+    error.statusCode = 400;
+    throw error;
   }
 
   const tagIds = [];
 
-  for (const name of names) {
-    if (name.length > 40) {
-      throw new Error("Each tag must be 40 characters or fewer.");
+  for (const value of tagValues) {
+    if (typeof value !== "string") {
+      const error = new Error("Each tag must be a string.");
+      error.statusCode = 400;
+      throw error;
     }
 
-    const slug = slugify(name);
+    const normalized = value.trim();
 
-    if (!slug) {
-      continue;
-    }
+    if (!normalized) continue;
 
-    let tag = await Tag.findOne({ slug });
+    let tag;
 
-    if (!tag) {
-      try {
-        tag = await Tag.create({ name, slug });
-      } catch (error) {
-        if (error.code !== 11000) {
-          throw error;
+    if (mongoose.isValidObjectId(normalized)) {
+      tag = await Tag.findById(normalized);
+
+      if (!tag) {
+        const error = new Error("Selected tag does not exist.");
+        error.statusCode = 400;
+        throw error;
+      }
+    } else {
+      const name = normalized.toLowerCase();
+
+      if (name.length > 40) {
+        const error = new Error("Each tag must be 40 characters or fewer.");
+        error.statusCode = 400;
+        throw error;
+      }
+
+      const slug = slugify(name);
+
+      if (!slug) continue;
+
+      tag = await Tag.findOne({ slug });
+
+      if (!tag) {
+        try {
+          tag = await Tag.create({ name, slug });
+        } catch (error) {
+          if (error.code !== 11000) throw error;
+
+          tag = await Tag.findOne({ slug });
         }
-
-        tag = await Tag.findOne({ slug });
       }
     }
 
     if (tag && !tagIds.some((id) => id.equals(tag._id))) {
       tagIds.push(tag._id);
+    }
+
+    if (tagIds.length > 10) {
+      const error = new Error("A post can have a maximum of 10 tags.");
+      error.statusCode = 400;
+      throw error;
     }
   }
 
@@ -67,7 +86,9 @@ export const createSlug = async (title, postId = null) => {
   const baseSlug = slugify(title);
 
   if (!baseSlug) {
-    throw new Error("Title must contain letters or numbers.");
+    const error = new Error("Title must contain letters or numbers.");
+    error.statusCode = 400;
+    throw error;
   }
 
   let slug = baseSlug;
@@ -76,7 +97,9 @@ export const createSlug = async (title, postId = null) => {
   while (
     await Post.exists({
       slug,
-      ...(postId && { _id: { $ne: postId } }),
+      ...(postId && {
+        _id: { $ne: postId },
+      }),
     })
   ) {
     slug = `${baseSlug}-${count++}`;

@@ -1,31 +1,38 @@
 import express from "express";
 
 import {
-  createPost,
-  deletePost,
-  getMyPosts,
-  getPostBySlug,
   getPublishedPosts,
+  getPostBySlug,
+  getMyPosts,
+  createPost,
   updatePost,
+  deletePost,
 } from "../controllers/postController.js";
 
 import authMiddleware from "../middleware/authMiddleware.js";
 
-const postRouter = express.Router();
+const router = express.Router();
 
 // Public routes
-postRouter.get("/", getPublishedPosts);
 
-// Protected routes
-postRouter.get("/mine", authMiddleware, getMyPosts);
+// Get all published posts (search and filter by tag)
+router.get("/", getPublishedPosts);
 
-postRouter.post("/", authMiddleware, createPost);
+// Get a published post by slug
+router.get("/slug/:slug", getPostBySlug);
 
-postRouter.put("/:id", authMiddleware, updatePost);
+// Protected routes (login required)
 
-postRouter.delete("/:id", authMiddleware, deletePost);
+// Get logged-in user's posts
+router.get("/mine", authMiddleware, getMyPosts);
 
-// Get individual published post by slug
-postRouter.get("/:slug", getPostBySlug);
+// Create a new post
+router.post("/", authMiddleware, createPost);
 
-export default postRouter;
+// Update a post
+router.put("/:id", authMiddleware, updatePost);
+
+// Delete a post
+router.delete("/:id", authMiddleware, deletePost);
+
+export default router;

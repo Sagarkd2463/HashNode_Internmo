@@ -10,14 +10,20 @@ const Article = () => {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    api
-      .get(`/posts/${slug}`)
-      .then((res) => {
+    const fetchArticle = async () => {
+      try {
+        setError("");
+        setPost(null);
+
+        const res = await api.get(`/posts/slug/${slug}`);
+
         setPost(res.data.data.post);
-      })
-      .catch(() => {
-        setError("Article not found");
-      });
+      } catch (err) {
+        setError(err.response?.data?.message || "Article not found");
+      }
+    };
+
+    fetchArticle();
   }, [slug]);
 
   if (error) {

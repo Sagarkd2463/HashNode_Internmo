@@ -4,13 +4,18 @@ import AuthContext from "./AuthContext.jsx";
 
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem("token"));
+  const [token, setToken] = useState(() => localStorage.getItem("token"));
   const [loading, setLoading] = useState(true);
 
-  // Check whether the user is already authenticated
+  // Verify logged-in user
   useEffect(() => {
+    let cancelled = false;
+
     const verifyUser = async () => {
-      if (!token) {
+      const savedToken = localStorage.getItem("token");
+
+      if (!savedToken) {
+        setUser(null);
         setLoading(false);
         return;
       }
@@ -18,24 +23,44 @@ const AuthProvider = ({ children }) => {
       try {
         const response = await api.get("/auth/me");
 
-        setUser(response.data.data.user);
+        if (!cancelled) {
+          setUser(response.data.data.user);
+          setToken(savedToken);
+        }
       } catch (error) {
-        localStorage.removeItem("token");
-        setToken(null);
-        setUser(null);
+        if (!cancelled) {
+          console.error(
+            "Authentication failed:",
+            error.response?.data?.message || error.message,
+          );
+
+          localStorage.removeItem("token");
+          setToken(null);
+          setUser(null);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
     verifyUser();
-  }, [token]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Login
   const login = async (credentials) => {
     const response = await api.post("/auth/login", credentials);
 
     const { user, token } = response.data.data;
+
+    if (!token) {
+      throw new Error("Authentication token not received.");
+    }
 
     localStorage.setItem("token", token);
 
@@ -50,6 +75,10 @@ const AuthProvider = ({ children }) => {
     const response = await api.post("/auth/register", userData);
 
     const { user, token } = response.data.data;
+
+    if (!token) {
+      throw new Error("Authentication token not received.");
+    }
 
     localStorage.setItem("token", token);
 
@@ -78,11 +107,7 @@ const AuthProvider = ({ children }) => {
     logout,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export default AuthProvider;

@@ -3,67 +3,57 @@ import { Link } from "react-router-dom";
 const Card = ({ post }) => {
   const publishedDate = post.publishedAt || post.createdAt;
 
-  const formattedDate = publishedDate
-    ? new Date(publishedDate).toLocaleDateString("en-IN", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })
-    : "Recently";
+  const formattedDate =
+    publishedDate && !isNaN(new Date(publishedDate).getTime())
+      ? new Date(publishedDate).toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        })
+      : "Recently";
 
   const authorName = post.author?.name || "Anonymous Author";
 
   const authorInitials = authorName
     .split(" ")
+    .filter(Boolean)
     .map((word) => word[0])
     .join("")
     .slice(0, 2)
     .toUpperCase();
 
   return (
-    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-teal-200 hover:shadow-xl">
+    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
       {/* Cover Image */}
       <Link
         to={`/posts/${post.slug}`}
+        className="relative block aspect-video overflow-hidden bg-slate-100"
         aria-label={`Read ${post.title}`}
-        className="relative block aspect-[16/9] overflow-hidden bg-slate-100"
       >
         {post.coverImage ? (
           <img
             src={post.coverImage}
             alt={post.title}
             loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-teal-100 via-cyan-50 to-slate-100">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.4"
-              className="h-12 w-12 text-teal-700/50"
-              aria-hidden="true"
-            >
-              <path d="M5 4h14v16H5z" />
-              <path d="M8 8h8M8 12h8M8 16h5" />
-            </svg>
+          <div className="flex h-full items-center justify-center bg-gradient-to-br from-teal-100 to-slate-100">
+            <span className="text-4xl font-bold text-teal-700">
+              {post.title?.charAt(0)?.toUpperCase() || "A"}
+            </span>
           </div>
         )}
 
-        {/* Image overlay label */}
-        <div className="absolute left-4 top-4">
-          <span className="rounded-full border border-white/50 bg-white/90 px-3 py-1 text-xs font-semibold text-teal-800 shadow-sm backdrop-blur-sm">
-            Article
-          </span>
-        </div>
+        <span className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-teal-800">
+          Article
+        </span>
       </Link>
 
       {/* Card Content */}
-      <div className="flex flex-1 flex-col p-4 sm:p-5 lg:p-6">
+      <div className="flex flex-1 flex-col p-5">
         {/* Author and Date */}
-        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 sm:text-sm">
+        <div className="flex items-center gap-2 text-sm text-slate-500">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-100 text-xs font-bold text-teal-800">
             {authorInitials}
           </div>
@@ -72,25 +62,29 @@ const Card = ({ post }) => {
             {authorName}
           </span>
 
-          <span aria-hidden="true" className="text-slate-300">
-            •
-          </span>
+          <span className="text-slate-300">•</span>
 
-          <time dateTime={publishedDate || undefined}>{formattedDate}</time>
+          <time
+            dateTime={
+              publishedDate ? new Date(publishedDate).toISOString() : undefined
+            }
+          >
+            {formattedDate}
+          </time>
         </div>
 
-        {/* Post Title */}
-        <h2 className="mt-4 text-lg font-bold leading-snug tracking-tight text-slate-900 transition-colors duration-200 sm:text-xl">
+        {/* Title */}
+        <h2 className="mt-4 text-xl font-bold leading-snug text-slate-900">
           <Link
             to={`/posts/${post.slug}`}
-            className="rounded-sm hover:text-teal-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2"
+            className="transition-colors hover:text-teal-700"
           >
             {post.title}
           </Link>
         </h2>
 
-        {/* Post Excerpt */}
-        <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
+        {/* Excerpt */}
+        <p className="mt-3 line-clamp-3 text-sm leading-7 text-slate-600">
           {post.excerpt ||
             "Discover this article and explore more ideas on InkSpace."}
         </p>
@@ -102,7 +96,7 @@ const Card = ({ post }) => {
               <Link
                 key={tag._id || tag.slug}
                 to={`/tags/${tag.slug}`}
-                className="rounded-full border border-teal-100 bg-teal-50 px-3 py-1.5 text-xs font-semibold text-teal-800 transition-all duration-200 hover:border-teal-300 hover:bg-teal-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+                className="rounded-full bg-teal-50 px-3 py-1.5 text-xs font-semibold text-teal-800 transition-colors hover:bg-teal-100"
               >
                 #{tag.name}
               </Link>
@@ -114,23 +108,10 @@ const Card = ({ post }) => {
         <div className="mt-5 border-t border-slate-100 pt-4">
           <Link
             to={`/posts/${post.slug}`}
-            className="inline-flex items-center gap-2 text-sm font-bold text-teal-700 transition-all duration-200 hover:gap-3 hover:text-teal-900 focus:outline-none focus-visible:underline"
+            className="inline-flex items-center gap-2 text-sm font-bold text-teal-700 transition-all hover:gap-3 hover:text-teal-900"
           >
             Read article
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-4 w-4"
-              aria-hidden="true"
-            >
-              <path d="M5 12h14" />
-              <path d="m12 5 7 7-7 7" />
-            </svg>
+            <span aria-hidden="true">→</span>
           </Link>
         </div>
       </div>
