@@ -1,29 +1,26 @@
-import User from "../models/User.js";
-import generateToken from "../utils/generateToken.js";
-import { comparePassword, hashedPassword } from "../utils/password.js";
+import {
+  registerUserService,
+  loginUserService,
+  getMeService,
+} from "../service/authService.js";
 
-// Return only public user information
-const publicUser = (user) => ({
-  id: user._id,
-  name: user.name,
-  email: user.email,
-  bio: user.bio,
-  avatarUrl: user.avatarUrl,
-  createdAt: user.createdAt,
-});
+// Email validation
+const isValidEmail = (email) => {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+};
 
-// Register a new user
+// Register
 export const registerUser = async (req, res) => {
   try {
-    const name = typeof req.body.name === "string" ? req.body.name.trim() : "";
+    const name = typeof req.body?.name === "string" ? req.body.name.trim() : "";
 
     const email =
-      typeof req.body.email === "string"
+      typeof req.body?.email === "string"
         ? req.body.email.trim().toLowerCase()
         : "";
 
     const password =
-      typeof req.body.password === "string" ? req.body.password : "";
+      typeof req.body?.password === "string" ? req.body.password : "";
 
     // Required fields
     if (!name || !email || !password) {
@@ -41,10 +38,8 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    // Correct email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!emailRegex.test(email)) {
+    // Email validation
+    if (!isValidEmail(email)) {
       return res.status(400).json({
         success: false,
         message: "Please enter a valid email address.",
@@ -52,48 +47,28 @@ export const registerUser = async (req, res) => {
     }
 
     // Password validation
-    if (password.length < 8) {
+    if (password.length < 8 || password.length > 128) {
       return res.status(400).json({
         success: false,
-        message: "Password must be at least 8 characters.",
+        message: "Password must be between 8 and 128 characters.",
       });
     }
 
-    // Check existing user
-    const existingUser = await User.findOne({ email });
-
-    if (existingUser) {
-      return res.status(409).json({
-        success: false,
-        message: "An account with this email already exists.",
-      });
-    }
-
-    // Hash password
-    const hashPassword = await hashedPassword(password);
-
-    // Create user
-    const user = await User.create({
+    const result = await registerUserService({
       name,
       email,
-      password: hashPassword,
+      password,
     });
-
-    // Generate JWT
-    const token = generateToken(user._id);
 
     return res.status(201).json({
       success: true,
       message: "User account registered successfully.",
-      data: {
-        user: publicUser(user),
-        token,
-      },
+      data: result,
     });
   } catch (error) {
-    console.error("REGISTER ERROR:", error);
+    console.error("REGISTER ERROR:", error.message);
 
-    // Handle duplicate email
+    // Duplicate email protection, including concurrent requests
     if (error.code === 11000) {
       return res.status(409).json({
         success: false,
@@ -101,25 +76,27 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    return res.status(500).json({
+    return res.status(error.statusCode || 500).json({
       success: false,
-      message: "Internal server error during registration.",
+      message: error.statusCode
+        ? error.message
+        : "Internal server error during registration.",
     });
   }
 };
 
-// Log in an existing user
+// Login
 export const loginUser = async (req, res) => {
   try {
     const email =
-      typeof req.body.email === "string"
+      typeof req.body?.email === "string"
         ? req.body.email.trim().toLowerCase()
         : "";
 
     const password =
-      typeof req.body.password === "string" ? req.body.password : "";
+      typeof req.body?.password === "string" ? req.body.password : "";
 
-    // Validate required fields
+    // Required fields
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -127,64 +104,56 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    // Validate email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!emailRegex.test(email)) {
+    // Email validation
+    if (!isValidEmail(email)) {
       return res.status(400).json({
         success: false,
         message: "Please enter a valid email address.",
       });
     }
 
-    // Find existing user
-    const user = await User.findOne({ email });
+    const result = await loginUserService({
+      email,
+      password,
+    });
 
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid email or password.",
-      });
-    }
-
-    // Compare password with hashed password
-    const match = await comparePassword(password, user.password);
-
-    if (!match) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid email or password.",
-      });
-    }
-
-    // Generate JWT token
-    const token = generateToken(user._id);
-
-    // Return successful response
     return res.status(200).json({
       success: true,
       message: "Login successful.",
-      data: {
-        user: publicUser(user),
-        token,
-      },
+      data: result,
     });
   } catch (error) {
-    console.error("LOGIN ERROR:", error);
+    console.error("LOGIN ERROR:", error.message);
 
-    return res.status(500).json({
+    return res.status(error.statusCode || 500).json({
       success: false,
-      message: "Internal server error during login.",
+      message: error.statusCode
+        ? error.message
+        : "Internal server error during login.",
     });
   }
 };
 
-// Get the currently logged-in user
+// Get currently logged-in user
 export const getMe = async (req, res) => {
-  return res.status(200).json({
-    success: true,
-    data: {
-      user: publicUser(req.user),
-    },
-  });
+  try {
+    const user = await getMeService(req.user._id);
+
+    return res.status(200).json({
+      success: true,
+      message: "User information fetched successfully.",
+      data: {
+        user,
+      },
+    });
+  } catch (error) {
+    console.error("GET ME ERROR:", error.message);
+
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.statusCode
+        ? error.message
+        : "Could not fetch user information.",
+    });
+  }
 };

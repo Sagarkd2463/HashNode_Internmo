@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-
 import api from "../api/api.js";
 import Card from "../components/Card.jsx";
 
@@ -56,13 +55,6 @@ const Home = () => {
               className="rounded-lg border border-stone-300 bg-white px-5 py-3 text-sm font-semibold"
             >
               Explore Tags
-            </Link>
-
-            <Link
-              to="/editor"
-              className="rounded-lg bg-emerald-700 px-5 py-3 text-sm font-semibold text-white"
-            >
-              Write an Article
             </Link>
           </div>
         </header>

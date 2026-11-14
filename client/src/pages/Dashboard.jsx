@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth.js";
 import api from "../api/api.js";
@@ -7,29 +7,24 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { user, logout, loading } = useAuth();
 
+  // Dashboard states
   const [posts, setPosts] = useState([]);
   const [postsLoading, setPostsLoading] = useState(true);
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState(null);
 
-  // Author initials
-  const getInitials = (name) => {
-    if (!name) return "U";
+  // Account status states
+  const [accountStatus, setAccountStatus] = useState("Loading");
+  const [statusLoading, setStatusLoading] = useState(true);
 
-    return name
-      .trim()
-      .split(/\s+/)
-      .slice(0, 2)
-      .map((word) => word[0])
-      .join("")
-      .toUpperCase();
-  };
+  const userId = user?._id || user?.id;
 
-  // Fetch logged-in user's articles
+  // Fetch user's articles
   useEffect(() => {
     if (loading) return;
 
-    if (!user) {
+    if (!userId) {
+      setPosts([]);
       setPostsLoading(false);
       return;
     }
@@ -41,15 +36,21 @@ const Dashboard = () => {
         setPostsLoading(true);
         setError("");
 
-        const res = await api.get("/posts/mine");
+        const response = await api.get("/posts/mine");
+
+        const result = response.data?.data;
+
+        const myPosts = Array.isArray(result)
+          ? result
+          : result?.posts || response.data?.posts || [];
 
         if (!cancelled) {
-          setPosts(res.data.data.posts || []);
+          setPosts(Array.isArray(myPosts) ? myPosts : []);
         }
       } catch (err) {
         if (!cancelled) {
           setError(
-            err.response?.data?.message || "Could not load your articles.",
+            err.response?.data?.message || "Unable to load your articles.",
           );
         }
       } finally {
@@ -64,12 +65,66 @@ const Dashboard = () => {
     return () => {
       cancelled = true;
     };
-  }, [user, loading]);
+  }, [userId, loading]);
+
+  // Fetch latest account status
+  useEffect(() => {
+    if (loading) return;
+
+    if (!userId) {
+      setAccountStatus("Unknown");
+      setStatusLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchAccountStatus = async () => {
+      try {
+        setStatusLoading(true);
+
+        const response = await api.get("/auth/me");
+
+        const latestUser = response.data?.data?.user;
+
+        const status =
+          latestUser?.status ||
+          (latestUser?.isActive === false ? "Inactive" : null) ||
+          user?.status ||
+          (user?.isActive === false ? "Inactive" : "Active");
+
+        if (!cancelled) {
+          setAccountStatus(status);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setAccountStatus(
+            user?.status ||
+              (user?.isActive === false ? "Inactive" : "Unavailable"),
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setStatusLoading(false);
+        }
+      }
+    };
+
+    fetchAccountStatus();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, loading]);
 
   // Logout
-  const handleLogout = () => {
-    logout();
-    navigate("/", { replace: true });
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/");
+    } catch (err) {
+      console.error("Logout failed:", err);
+    }
   };
 
   // Delete article
@@ -86,323 +141,292 @@ const Dashboard = () => {
 
       await api.delete(`/posts/${id}`);
 
-      setPosts((prev) => prev.filter((post) => post._id !== id));
+      setPosts((previousPosts) =>
+        previousPosts.filter((post) => post._id !== id),
+      );
     } catch (err) {
-      setError(err.response?.data?.message || "Could not delete article.");
+      setError(err.response?.data?.message || "Unable to delete this article.");
     } finally {
       setDeletingId(null);
     }
   };
 
-  // Date formatting
-  const formatDate = (dateValue) => {
-    if (!dateValue) return "Not available";
+  // Format date
+  const formatDate = (date) => {
+    if (!date) return "Not available";
 
-    const date = new Date(dateValue);
+    const parsedDate = new Date(date);
 
-    if (isNaN(date.getTime())) return "Not available";
+    if (Number.isNaN(parsedDate.getTime())) {
+      return "Not available";
+    }
 
-    return date.toLocaleDateString("en-IN", {
+    return parsedDate.toLocaleDateString("en-IN", {
       day: "numeric",
       month: "short",
       year: "numeric",
     });
   };
 
-  // Loading screen
-  if (loading) {
-    return (
-      <main
-        role="status"
-        className="flex min-h-screen items-center justify-center bg-slate-50"
-      >
-        <div className="h-12 w-12 animate-spin rounded-full border-4 border-teal-100 border-t-teal-700" />
-      </main>
-    );
-  }
+  // Account status styles
+  const statusStyles = {
+    active: {
+      badge: "bg-green-100 text-green-700",
+      dot: "bg-green-500",
+    },
+    inactive: {
+      badge: "bg-gray-100 text-gray-700",
+      dot: "bg-gray-500",
+    },
+    suspended: {
+      badge: "bg-red-100 text-red-700",
+      dot: "bg-red-500",
+    },
+    pending: {
+      badge: "bg-yellow-100 text-yellow-700",
+      dot: "bg-yellow-500",
+    },
+    unavailable: {
+      badge: "bg-gray-100 text-gray-600",
+      dot: "bg-gray-400",
+    },
+    unknown: {
+      badge: "bg-gray-100 text-gray-600",
+      dot: "bg-gray-400",
+    },
+  };
 
-  // Unauthenticated user
-  if (!user) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-        <div className="w-full max-w-md rounded-2xl border bg-white p-8 text-center shadow-sm">
-          <h1 className="text-xl font-bold text-slate-900">Session expired</h1>
+  const normalizedStatus = String(accountStatus).toLowerCase();
 
-          <p className="mt-2 text-sm text-slate-500">
-            Please sign in again to access your dashboard.
-          </p>
+  const currentStatusStyle =
+    statusStyles[normalizedStatus] || statusStyles.unknown;
 
-          <button
-            onClick={() => navigate("/login", { replace: true })}
-            className="mt-6 rounded-xl bg-teal-700 px-6 py-3 text-sm font-semibold text-white hover:bg-teal-800"
-          >
-            Go to Login
-          </button>
-        </div>
-      </main>
-    );
-  }
+  // Dashboard statistics
+  const totalPosts = posts.length;
 
-  // Statistics
   const publishedPosts = posts.filter(
     (post) => post.status === "published",
   ).length;
 
   const draftPosts = posts.filter((post) => post.status === "draft").length;
 
-  const authorName = user.name || "Author";
+  // Loading screen
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <p className="text-gray-600 text-base sm:text-lg">
+          Loading dashboard...
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        {/* Dashboard Header */}
-        <header className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-teal-700">
-              InkSpace / Overview
-            </p>
-
-            <h1 className="text-2xl font-extrabold text-slate-950 sm:text-3xl lg:text-4xl">
-              Welcome back, {authorName.split(" ")[0]}!
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="w-full sm:w-auto text-center sm:text-left">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+              My Dashboard
             </h1>
 
-            <p className="mt-2 text-sm text-slate-500 sm:text-base">
-              Manage your profile and continue writing articles.
+            <p className="text-sm text-gray-500 mt-1">
+              Manage your articles and account.
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap justify-center items-center gap-2 sm:gap-3 w-full sm:w-auto">
             <Link
-              to="/profile"
-              className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-semibold text-slate-700 transition hover:bg-teal-50 sm:flex-none"
+              to="/"
+              className="px-4 py-2 rounded-lg text-sm sm:text-base text-gray-700 hover:bg-gray-100 transition"
             >
-              Edit Profile
+              Home
             </Link>
 
             <button
               onClick={handleLogout}
-              className="flex-1 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 sm:flex-none"
+              className="px-4 py-2 rounded-lg text-sm sm:text-base bg-red-600 text-white hover:bg-red-700 transition"
             >
               Logout
             </button>
           </div>
-        </header>
+        </div>
+      </header>
 
-        {/* Welcome Banner */}
-        <section className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-teal-800 via-teal-900 to-slate-950 p-6 text-white shadow-lg sm:p-8 lg:p-10">
-          <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full border-[35px] border-white/5" />
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8">
+        {/* Welcome Section */}
+        <section className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl sm:rounded-2xl p-5 sm:p-8 text-white mb-6 sm:mb-8">
+          <h2 className="text-2xl sm:text-3xl font-bold break-words">
+            Welcome back, {user?.name || "Writer"}!
+          </h2>
 
-          <div className="pointer-events-none absolute -bottom-28 right-32 h-64 w-64 rounded-full bg-teal-400/10 blur-3xl" />
+          <p className="mt-2 text-sm sm:text-base text-indigo-100">
+            Manage your content, track your articles, and keep writing.
+          </p>
 
-          <div className="relative z-10 max-w-2xl">
-            <span className="rounded-full border border-teal-300/30 bg-teal-300/10 px-3 py-1 text-xs font-semibold text-teal-100">
-              YOUR CREATOR SPACE
-            </span>
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 mt-5">
+            <Link
+              to="/editor"
+              className="text-center px-5 py-3 bg-white text-indigo-700 font-semibold rounded-lg hover:bg-indigo-50 transition"
+            >
+              + Write New Article
+            </Link>
 
-            <h2 className="mt-5 text-2xl font-bold sm:text-3xl lg:text-4xl">
-              Your ideas deserve
-              <span className="block text-teal-300">a place to grow.</span>
-            </h2>
-
-            <p className="mt-4 text-sm leading-7 text-slate-200 sm:text-base">
-              Share your knowledge, publish technical articles, and connect with
-              readers and fellow developers.
-            </p>
+            <Link
+              to="/tags"
+              className="text-center px-5 py-3 bg-indigo-500 text-white font-semibold rounded-lg hover:bg-indigo-400 transition border border-indigo-300"
+            >
+              Explore Tags
+            </Link>
           </div>
         </section>
 
         {/* Statistics */}
-        <section className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-sm font-medium text-slate-500">Total Articles</p>
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <div className="bg-white rounded-xl shadow-sm border p-5 sm:p-6">
+            <p className="text-gray-500 text-sm">Total Articles</p>
 
-            <h2 className="mt-2 text-3xl font-bold text-slate-900">
-              {postsLoading ? "..." : posts.length}
-            </h2>
+            <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">
+              {postsLoading ? "..." : totalPosts}
+            </h3>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-sm font-medium text-slate-500">Published</p>
+          <div className="bg-white rounded-xl shadow-sm border p-5 sm:p-6">
+            <p className="text-gray-500 text-sm">Published Articles</p>
 
-            <h2 className="mt-2 text-3xl font-bold text-teal-700">
+            <h3 className="text-2xl sm:text-3xl font-bold text-green-600 mt-2">
               {postsLoading ? "..." : publishedPosts}
-            </h2>
+            </h3>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-sm font-medium text-slate-500">Drafts</p>
+          <div className="bg-white rounded-xl shadow-sm border p-5 sm:p-6">
+            <p className="text-gray-500 text-sm">Draft Articles</p>
 
-            <h2 className="mt-2 text-3xl font-bold text-amber-600">
+            <h3 className="text-2xl sm:text-3xl font-bold text-yellow-600 mt-2">
               {postsLoading ? "..." : draftPosts}
-            </h2>
+            </h3>
           </div>
         </section>
 
-        {/* Main Dashboard Grid */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Profile Overview and Account Details */}
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
           {/* Profile Overview */}
-          <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:col-span-2">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-5 sm:px-7">
-              <div>
-                <h2 className="text-lg font-bold text-slate-900">
-                  Profile Overview
-                </h2>
+          <div className="bg-white rounded-xl shadow-sm border p-5 sm:p-6 min-w-0">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-5">
+              Profile Overview
+            </h3>
 
-                <p className="mt-1 text-sm text-slate-500">
-                  Your public account information.
-                </p>
-              </div>
-
-              <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                Account Active
-              </span>
-            </div>
-
-            <div className="p-5 sm:p-7">
-              {/* User Information */}
-              <div className="flex flex-col gap-4 border-b border-slate-100 pb-7 sm:flex-row sm:items-center">
-                <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-teal-600 to-cyan-800 text-2xl font-bold text-white">
-                  {getInitials(user.name)}
-
-                  {user.avatarUrl && (
-                    <img
-                      src={user.avatarUrl}
-                      alt={`${authorName}'s avatar`}
-                      onError={(event) => {
-                        event.currentTarget.style.display = "none";
-                      }}
-                      className="absolute inset-0 h-full w-full object-cover"
-                    />
-                  )}
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left min-w-0">
+              {user?.avatarUrl ? (
+                <img
+                  src={user.avatarUrl}
+                  alt={`${user?.name || "User"} profile`}
+                  className="w-16 h-16 rounded-full object-cover shrink-0"
+                />
+              ) : (
+                <div className="w-16 h-16 shrink-0 rounded-full bg-indigo-100 flex items-center justify-center text-2xl font-bold text-indigo-700">
+                  {user?.name?.charAt(0)?.toUpperCase() || "U"}
                 </div>
+              )}
 
-                <div className="min-w-0">
-                  <h3 className="break-words text-xl font-bold text-slate-900 sm:text-2xl">
-                    {authorName}
-                  </h3>
+              <div className="min-w-0 w-full">
+                <h4 className="text-lg font-semibold text-gray-900 break-words">
+                  {user?.name || "User"}
+                </h4>
 
-                  <p className="mt-1 break-all text-sm text-slate-500">
-                    {user.email}
-                  </p>
-
-                  <span className="mt-3 inline-flex rounded-lg bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-800">
-                    InkSpace Member
-                  </span>
-                </div>
-              </div>
-
-              {/* Profile Details */}
-              <div className="grid grid-cols-1 gap-6 pt-7 sm:grid-cols-2">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    Full Name
-                  </p>
-
-                  <p className="mt-2 break-words text-sm font-semibold text-slate-800">
-                    {user.name || "Not provided"}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    Email Address
-                  </p>
-
-                  <p className="mt-2 break-all text-sm font-semibold text-slate-800">
-                    {user.email || "Not provided"}
-                  </p>
-                </div>
-
-                <div className="sm:col-span-2">
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    About You
-                  </p>
-
-                  <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-7 text-slate-600">
-                    {user.bio ||
-                      "You haven't added a bio yet. Tell readers a little about yourself."}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Account Information */}
-          <aside className="flex flex-col gap-6">
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-              <h3 className="font-bold text-slate-900">Account Details</h3>
-
-              <p className="mt-1 text-xs text-slate-500">
-                Your membership information.
-              </p>
-
-              <div className="mt-6 border-t border-slate-100 pt-5">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Member Since
+                <p className="text-sm text-gray-500 break-all">
+                  {user?.email || "No email available"}
                 </p>
 
-                <p className="mt-2 text-sm font-semibold text-slate-800">
-                  {formatDate(user.createdAt)}
-                </p>
-              </div>
-
-              <div className="mt-5 border-t border-slate-100 pt-5">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Account Status
-                </p>
-
-                <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-emerald-700">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                  Active
-                </p>
-              </div>
-            </section>
-
-            {/* Quick Actions */}
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-              <h3 className="font-bold text-slate-900">Quick Actions</h3>
-
-              <p className="mt-1 text-sm text-slate-500">
-                Manage your InkSpace account.
-              </p>
-
-              <div className="mt-5 space-y-3">
-                <Link
-                  to="/tags"
-                  className="flex w-full items-center justify-between rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-teal-200 hover:bg-teal-50 hover:text-teal-800"
+                <span
+                  className={`inline-flex items-center gap-2 mt-3 px-3 py-1 rounded-full text-xs font-semibold ${currentStatusStyle.badge}`}
                 >
-                  Explore Tags
-                  <span>→</span>
-                </Link>
+                  <span
+                    className={`w-2 h-2 rounded-full ${currentStatusStyle.dot}`}
+                  />
+
+                  {statusLoading ? "Loading..." : accountStatus}
+                </span>
               </div>
-            </section>
-          </aside>
-        </div>
-
-        {/* My Articles */}
-        <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-xl font-bold text-slate-900">My Articles</h2>
-
-              <p className="mt-1 text-sm text-slate-500">
-                Manage your published articles and drafts.
-              </p>
             </div>
+
+            <p className="text-gray-600 text-sm mt-5 break-words">
+              {user?.bio || "You haven't added a profile bio yet."}
+            </p>
 
             <Link
-              to="/tags"
-              className="text-sm font-semibold text-teal-700 hover:text-teal-900"
+              to="/profile"
+              className="inline-block mt-5 text-indigo-600 font-medium hover:text-indigo-800 transition"
             >
-              Explore Tags →
+              View / Edit Profile →
             </Link>
           </div>
 
-          {/* Error Message */}
+          {/* Account Details */}
+          <div className="bg-white rounded-xl shadow-sm border p-5 sm:p-6 min-w-0">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-5">
+              Account Details
+            </h3>
+
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center border-b pb-3 gap-1 sm:gap-4">
+                <span className="text-sm text-gray-500">Full Name</span>
+
+                <span className="text-gray-900 font-medium text-sm sm:text-right break-words">
+                  {user?.name || "Not available"}
+                </span>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center border-b pb-3 gap-1 sm:gap-4">
+                <span className="text-sm text-gray-500">Email Address</span>
+
+                <span className="text-gray-900 font-medium text-sm sm:text-right break-all">
+                  {user?.email || "Not available"}
+                </span>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center border-b pb-3 gap-2 sm:gap-4">
+                <span className="text-sm text-gray-500">Account Status</span>
+
+                <span
+                  className={`inline-flex self-start sm:self-auto px-3 py-1 rounded-full text-xs font-semibold ${currentStatusStyle.badge}`}
+                >
+                  {statusLoading ? "Loading..." : accountStatus}
+                </span>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-4">
+                <span className="text-sm text-gray-500">Joined On</span>
+
+                <span className="text-gray-900 font-medium text-sm">
+                  {formatDate(user?.createdAt)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* My Articles */}
+        <section className="bg-white rounded-xl shadow-sm border p-5 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900">
+              My Articles
+            </h3>
+
+            <Link
+              to="/editor"
+              className="w-full sm:w-auto text-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+            >
+              + Create Article
+            </Link>
+          </div>
+
+          {/* Error */}
           {error && (
             <div
               role="alert"
-              className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+              className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg mb-5 text-sm"
             >
               {error}
             </div>
@@ -410,52 +434,67 @@ const Dashboard = () => {
 
           {/* Loading */}
           {postsLoading ? (
-            <div
-              role="status"
-              className="py-12 text-center text-sm text-slate-500"
-            >
+            <div className="text-center py-10 text-gray-500">
               Loading your articles...
             </div>
-          ) : posts.length > 0 ? (
+          ) : posts.length === 0 ? (
+            /* Empty State */
+            <div className="text-center py-10 sm:py-12">
+              <h4 className="text-lg font-semibold text-gray-800">
+                No articles yet
+              </h4>
+
+              <p className="text-gray-500 text-sm mt-2">
+                Start sharing your ideas with the community.
+              </p>
+
+              <Link
+                to="/editor"
+                className="inline-block mt-5 px-5 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+              >
+                Write Your First Article
+              </Link>
+            </div>
+          ) : (
+            /* Articles List */
             <div className="space-y-4">
               {posts.map((post) => (
                 <article
                   key={post._id}
-                  className="flex flex-col justify-between gap-4 rounded-xl border border-slate-200 p-5 transition hover:border-teal-200 sm:flex-row sm:items-center"
+                  className="border rounded-xl p-4 sm:p-5 flex flex-col lg:flex-row lg:justify-between gap-5 min-w-0"
                 >
-                  {/* Article Information */}
-                  <div className="min-w-0">
-                    <h3 className="break-words font-bold text-slate-900">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-base sm:text-lg font-semibold text-gray-900 break-words">
                       {post.title}
-                    </h3>
+                    </h4>
 
-                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-500">
+                    <p className="text-sm text-gray-500 mt-2 break-words">
                       {post.excerpt || "No excerpt available."}
                     </p>
 
-                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-3 mt-4">
                       <span
-                        className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
                           post.status === "published"
-                            ? "bg-emerald-50 text-emerald-700"
-                            : "bg-amber-50 text-amber-700"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-yellow-100 text-yellow-700"
                         }`}
                       >
-                        {post.status}
+                        {post.status || "draft"}
                       </span>
 
-                      <span className="text-xs text-slate-400">
-                        {formatDate(post.publishedAt || post.createdAt)}
+                      <span className="text-xs text-gray-500">
+                        Created: {formatDate(post.createdAt)}
                       </span>
                     </div>
                   </div>
 
                   {/* Article Actions */}
-                  <div className="flex shrink-0 flex-wrap gap-2">
-                    {post.status === "published" && (
+                  <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                    {post.status === "published" && post.slug && (
                       <Link
                         to={`/posts/${post.slug}`}
-                        className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                        className="flex-1 sm:flex-none text-center px-4 py-2 text-sm border border-indigo-600 text-indigo-600 rounded-lg hover:bg-indigo-50 transition"
                       >
                         View
                       </Link>
@@ -463,7 +502,7 @@ const Dashboard = () => {
 
                     <Link
                       to={`/editor/${post._id}`}
-                      className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+                      className="flex-1 sm:flex-none text-center px-4 py-2 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition"
                     >
                       Edit
                     </Link>
@@ -471,7 +510,7 @@ const Dashboard = () => {
                     <button
                       onClick={() => handleDelete(post._id)}
                       disabled={deletingId === post._id}
-                      className="rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex-1 sm:flex-none px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
                     >
                       {deletingId === post._id ? "Deleting..." : "Delete"}
                     </button>
@@ -479,35 +518,17 @@ const Dashboard = () => {
                 </article>
               ))}
             </div>
-          ) : (
-            <div className="py-12 text-center">
-              <h3 className="text-lg font-semibold text-slate-800">
-                No articles yet
-              </h3>
-
-              <p className="mt-2 text-sm text-slate-500">
-                You haven't written any articles yet. Start sharing your ideas!
-              </p>
-
-              <Link
-                to="/new-post"
-                className="mt-5 inline-block rounded-xl bg-teal-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-800"
-              >
-                Write Your First Article
-              </Link>
-            </div>
           )}
         </section>
+      </main>
 
-        {/* Footer */}
-        <footer className="mt-10 border-t border-slate-200 py-6 text-center">
-          <p className="text-xs font-medium text-slate-400">
-            © {new Date().getFullYear()} InkSpace. Your space to create and
-            share.
-          </p>
-        </footer>
-      </div>
-    </main>
+      {/* Footer */}
+      <footer className="border-t bg-white mt-8 sm:mt-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 text-center text-xs sm:text-sm text-gray-500">
+          © {new Date().getFullYear()} InkSpace. All rights reserved.
+        </div>
+      </footer>
+    </div>
   );
 };
 

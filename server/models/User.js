@@ -23,6 +23,11 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true, minlength: 8 },
     bio: { type: String, maxlength: 200, default: "" },
     avatarUrl: { type: String, default: "" },
+    status: {
+      type: String,
+      enum: ["Active", "Inactive", "Suspended", "Pending"],
+      default: "Active",
+    },
   },
   { timestamps: true },
 );

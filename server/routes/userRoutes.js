@@ -7,12 +7,12 @@ import {
 
 import authMiddleware from "../middleware/authMiddleware.js";
 
-const userRouter = express.Router();
+const router = express.Router();
 
 // Get public user profile
-userRouter.get("/:id", getPublicProfile);
+router.get("/:id", getPublicProfile);
 
 // Update logged-in user's profile
-userRouter.put("/me", authMiddleware, updateMyProfile);
+router.patch("/me", authMiddleware, updateMyProfile);
 
-export default userRouter;
+export default router;

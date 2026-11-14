@@ -38,7 +38,7 @@ const authMiddleware = async (req, res, next) => {
 
     // 5. Find user
     const user = await User.findById(userId).select(
-      "_id name email bio avatarUrl createdAt",
+      "_id name email bio avatarUrl status createdAt",
     );
 
     if (!user) {

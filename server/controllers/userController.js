@@ -1,22 +1,33 @@
 import mongoose from "mongoose";
-import User from "../models/User.js";
-import Post from "../models/Post.js";
+import {
+  getPublicProfileService,
+  updateMyProfileService,
+} from "../service/userService.js";
 
-// Return public user information
-const publicUser = (user) => ({
-  id: user._id,
-  name: user.name,
-  email: user.email,
-  bio: user.bio,
-  avatarUrl: user.avatarUrl,
-  createdAt: user.createdAt,
-});
+// Validate email
+const isValidEmail = (email) => {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+};
+
+// Validate avatar URL
+const isValidAvatarUrl = (value) => {
+  if (!value) return true;
+
+  try {
+    const url = new URL(value);
+
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
 
 // Get public profile
 export const getPublicProfile = async (req, res, next) => {
   try {
     const { id } = req.params;
 
+    // Validate user ID
     if (!mongoose.isValidObjectId(id)) {
       return res.status(400).json({
         success: false,
@@ -24,29 +35,12 @@ export const getPublicProfile = async (req, res, next) => {
       });
     }
 
-    const user = await User.findById(id).select("-password");
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found.",
-      });
-    }
-
-    const posts = await Post.find({
-      author: user._id,
-      status: "published",
-    })
-      .populate("tags", "name slug")
-      .sort({ publishedAt: -1, createdAt: -1 });
+    const result = await getPublicProfileService(id);
 
     return res.status(200).json({
       success: true,
-      data: {
-        user: publicUser(user),
-        posts,
-        count: posts.length,
-      },
+      message: "Public profile fetched successfully.",
+      data: result,
     });
   } catch (error) {
     next(error);
@@ -56,9 +50,23 @@ export const getPublicProfile = async (req, res, next) => {
 // Update logged-in user's profile
 export const updateMyProfile = async (req, res, next) => {
   try {
-    const { name, email, bio, avatarUrl } = req.body;
+    const { name, email, bio, avatarUrl } = req.body || {};
 
     const updates = {};
+
+    // Prevent restricted or unexpected fields
+    const allowedFields = ["name", "email", "bio", "avatarUrl"];
+
+    const invalidFields = Object.keys(req.body || {}).filter(
+      (field) => !allowedFields.includes(field),
+    );
+
+    if (invalidFields.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `These fields cannot be updated: ${invalidFields.join(", ")}`,
+      });
+    }
 
     // Validate name
     if (name !== undefined) {
@@ -78,27 +86,19 @@ export const updateMyProfile = async (req, res, next) => {
 
     // Validate email
     if (email !== undefined) {
-      if (
-        typeof email !== "string" ||
-        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
-      ) {
+      if (typeof email !== "string") {
         return res.status(400).json({
           success: false,
-          message: "Invalid email address.",
+          message: "Email must be a string.",
         });
       }
 
       const normalizedEmail = email.trim().toLowerCase();
 
-      const existingUser = await User.findOne({
-        email: normalizedEmail,
-        _id: { $ne: req.user._id },
-      });
-
-      if (existingUser) {
-        return res.status(409).json({
+      if (!isValidEmail(normalizedEmail)) {
+        return res.status(400).json({
           success: false,
-          message: "Email is already registered.",
+          message: "Please provide a valid email address.",
         });
       }
 
@@ -121,11 +121,12 @@ export const updateMyProfile = async (req, res, next) => {
     if (avatarUrl !== undefined) {
       if (
         typeof avatarUrl !== "string" ||
-        (avatarUrl.trim() && !/^https?:\/\/\S+$/i.test(avatarUrl.trim()))
+        avatarUrl.trim().length > 2048 ||
+        !isValidAvatarUrl(avatarUrl.trim())
       ) {
         return res.status(400).json({
           success: false,
-          message: "Please provide a valid avatar URL.",
+          message: "Please provide a valid HTTP or HTTPS avatar URL.",
         });
       }
 
@@ -140,31 +141,26 @@ export const updateMyProfile = async (req, res, next) => {
       });
     }
 
-    // Update user
-    const user = await User.findByIdAndUpdate(
-      req.user._id,
-      { $set: updates },
-      {
-        returnDocument: "after",
-        runValidators: true,
-      },
-    );
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found.",
-      });
-    }
+    // Update profile
+    const user = await updateMyProfileService(req.user._id, updates);
 
     return res.status(200).json({
       success: true,
       message: "Profile updated successfully.",
       data: {
-        user: publicUser(user),
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          bio: user.bio,
+          avatarUrl: user.avatarUrl,
+          status: user.status,
+          createdAt: user.createdAt,
+        },
       },
     });
   } catch (error) {
+    // Handle duplicate email
     if (error.code === 11000) {
       return res.status(409).json({
         success: false,

@@ -3,6 +3,17 @@ import Post from "../models/Post.js";
 import Tag from "../models/Tag.js";
 import { slugify } from "../utils/slug.js";
 
+// Return safe user information (never return password)
+export const publicUser = (user) => ({
+  id: user._id,
+  name: user.name,
+  email: user.email,
+  bio: user.bio || "",
+  avatarUrl: user.avatarUrl || "",
+  status: user.status || "Active",
+  createdAt: user.createdAt,
+});
+
 // Include author and tag information in post responses
 export const populatePost = (query) => {
   return query
