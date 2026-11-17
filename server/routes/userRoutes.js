@@ -13,6 +13,6 @@ const router = express.Router();
 router.get("/:id", getPublicProfile);
 
 // Update logged-in user's profile
-router.patch("/me", authMiddleware, updateMyProfile);
+router.put("/me", authMiddleware, updateMyProfile);
 
 export default router;

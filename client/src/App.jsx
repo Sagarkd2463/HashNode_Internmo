@@ -13,6 +13,7 @@ import Article from "./pages/Article.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Editor from "./pages/Editor.jsx";
 import Profile from "./pages/Profile.jsx";
+import PublicProfile from "./pages/PublicProfile.jsx";
 import Tags from "./pages/Tags.jsx";
 import TagFeed from "./pages/TagFeed.jsx";
 import NotFound from "./pages/NotFound.jsx";
@@ -34,6 +35,8 @@ const App = () => {
 
           <Route path="/posts/:slug" element={<Article />} />
 
+          <Route path="/profile/:id" element={<PublicProfile />} />
+
           <Route path="/tags" element={<Tags />} />
 
           <Route path="/tags/:slug" element={<TagFeed />} />
@@ -47,7 +50,7 @@ const App = () => {
 
             <Route path="/editor/:id" element={<Editor />} />
 
-            <Route path="/profile" element={<Profile />} />
+            <Route path="/settings" element={<Profile />} />
           </Route>
 
           {/* 404 Route */}

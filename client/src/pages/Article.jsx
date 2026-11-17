@@ -15,7 +15,7 @@ const Article = () => {
         setError("");
         setPost(null);
 
-        const res = await api.get(`/posts/slug/${slug}`);
+        const res = await api.get(`/posts/${slug}`);
 
         setPost(res.data.data.post);
       } catch (err) {

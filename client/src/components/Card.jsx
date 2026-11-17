@@ -58,9 +58,18 @@ const Card = ({ post }) => {
             {authorInitials}
           </div>
 
-          <span className="max-w-[130px] truncate font-semibold text-slate-800">
-            {authorName}
-          </span>
+          {post.author?._id ? (
+            <Link
+              to={`/profile/${post.author._id || post.author.id}`}
+              className="max-w-[130px] truncate font-semibold text-slate-800 hover:text-teal-700"
+            >
+              {authorName}
+            </Link>
+          ) : (
+            <span className="max-w-[130px] truncate font-semibold text-slate-800">
+              {authorName}
+            </span>
+          )}
 
           <span className="text-slate-300">•</span>
 

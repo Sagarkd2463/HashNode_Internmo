@@ -18,13 +18,13 @@ const router = express.Router();
 // Get all published posts (search and filter by tag)
 router.get("/", getPublishedPosts);
 
-// Get a published post by slug
-router.get("/slug/:slug", getPostBySlug);
-
 // Protected routes (login required)
 
 // Get logged-in user's posts
 router.get("/mine", authMiddleware, getMyPosts);
+
+// Get a published post by slug (keep after /mine so it cannot capture it)
+router.get("/:slug", getPostBySlug);
 
 // Create a new post
 router.post("/", authMiddleware, createPost);

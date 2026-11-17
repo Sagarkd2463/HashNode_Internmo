@@ -356,7 +356,7 @@ const Dashboard = () => {
             </p>
 
             <Link
-              to="/profile"
+              to="/settings"
               className="inline-block mt-5 text-indigo-600 font-medium hover:text-indigo-800 transition"
             >
               View / Edit Profile →

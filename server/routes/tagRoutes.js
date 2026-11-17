@@ -5,6 +5,7 @@ import {
   createTag,
   getPostsByTag,
 } from "../controllers/tagController.js";
+import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -12,7 +13,7 @@ const router = express.Router();
 router.get("/", getTags);
 
 // Create a new tag
-router.post("/", createTag);
+router.post("/", authMiddleware, createTag);
 
 // Get published posts by tag slug
 router.get("/:slug/posts", getPostsByTag);

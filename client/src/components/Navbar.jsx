@@ -91,8 +91,12 @@ const Navbar = () => {
                       Dashboard
                     </NavLink>
 
-                    <NavLink to="/profile" className={navLinkClass}>
-                      Profile
+                    <NavLink to={`/profile/${user._id || user.id}`} className={navLinkClass}>
+                      Public profile
+                    </NavLink>
+
+                    <NavLink to="/settings" className={navLinkClass}>
+                      Settings
                     </NavLink>
 
                     <div className="ml-2 flex items-center gap-2 border-l border-slate-200 pl-4">
@@ -218,12 +222,21 @@ const Navbar = () => {
                       </NavLink>
 
                       <NavLink
-                        to="/profile"
+                        to={`/profile/${user._id || user.id}`}
                         className={navLinkClass}
                         onClick={closeMenu}
                         tabIndex={menuOpen ? 0 : -1}
                       >
                         Profile
+                      </NavLink>
+
+                      <NavLink
+                        to="/settings"
+                        className={navLinkClass}
+                        onClick={closeMenu}
+                        tabIndex={menuOpen ? 0 : -1}
+                      >
+                        Settings
                       </NavLink>
 
                       <div className="mt-3 flex items-center gap-3 border-t border-slate-200 px-3 py-4">
